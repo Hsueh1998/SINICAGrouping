@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>籃球分組系統 Pro</title>
+    <style>
+      :root {
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --primary: #ff9800;
+        --text: #ffffff;
+        --text-muted: #aaaaaa;
+        --danger: #f44336;
+        --success: #4caf50;
+        --in-color: #2196f3;
+        --out-color: #4caf50;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text);
+        margin: 0;
+        padding: 10px;
+        padding-bottom: 80px;
+      }
+      h1,
+      h2,
+      h3 {
+        text-align: center;
+        color: var(--primary);
+        margin-top: 5px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* 表單元素 */
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #333;
+        background-color: #2a2a2a;
+        color: white;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: var(--primary);
+        color: #000;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+      }
+      button:active {
+        opacity: 0.8;
+      }
+      .btn-danger {
+        background-color: var(--danger);
+        color: white;
+      }
+      .btn-success {
+        background-color: var(--success);
+        color: white;
+      }
+      .btn-secondary {
+        background-color: #555;
+        color: white;
+      }
+      .btn-small {
+        width: auto;
+        padding: 6px 12px;
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .flex-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* 網格與卡片 (圖像式) */
+      .player-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 15px;
+      }
+      .player-card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #333;
+        position: relative;
+      }
+      .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #333;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+      }
+      .avatar.in {
+        border: 2px solid var(--in-color);
+      }
+      .avatar.out {
+        border: 2px solid var(--out-color);
+      }
+      .card-name {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 5px;
+      }
+      .card-score {
+        color: var(--primary);
+        font-weight: bold;
+      }
+      .card-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+      }
+
+      /* 出賽清單樣式 */
+      .match-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--card-bg);
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      .bind-select {
+        width: auto;
+        padding: 4px;
+        margin: 0;
+        font-size: 14px;
+      }
+
+      /* 分組結果 */
+      .team-box {
+        border: 2px solid var(--primary);
+        margin-bottom: 15px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--card-bg);
+      }
+      .team-header {
+        background-color: var(--primary);
+        color: #000;
+        padding: 10px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+      }
+      .team-body {
+        padding: 10px;
+      }
+      .team-player {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dashed #444;
+      }
+
+      /* 底部導覽列 */
+      nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #1a1a1a;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px;
+        border-top: 1px solid #333;
+        z-index: 100;
+      }
+      nav button {
+        margin: 0;
+        border-radius: 20px;
+        background-color: transparent;
+        color: var(--text-muted);
+      }
+      nav button.active {
+        background-color: var(--primary);
+        color: #000;
+      }
+
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      /* 模態框 (Modal) */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+      .modal {
+        background: var(--bg-color);
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #444;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🏀 分組系統 Pro</h1>
+
+      <!-- 標籤 1：球員管理 (圖像式) -->
+      <div id="tab-players" class="tab-content active">
+        <div class="flex-row">
+          <input type="text" id="searchInput" placeholder="🔍 搜尋球員名字..." oninput="renderPlayerList()" />
+          <select id="sortSelect" onchange="renderPlayerList()" style="width: 120px">
+            <option value="scoreDesc">分數 (高到低)</option>
+            <option value="scoreAsc">分數 (低到高)</option>
+            <option value="pos">位置</option>
+          </select>
+        </div>
+        <button onclick="openModal()" style="margin-bottom: 15px">➕ 新增球員</button>
+
+        <div class="flex-between">
+          <h3>球員庫 (<span id="totalPlayerCount">0</span>)</h3>
+        </div>
+
+        <div class="player-grid" id="playerGrid">
+          <!-- 卡片會由 JS 渲染在這裡 -->
+        </div>
+      </div>
+
+      <!-- 標籤 2：今日出賽與分組 -->
+      <div id="tab-match" class="tab-content">
+        <div class="flex-between">
+          <h3>今日出賽名單</h3>
+          <span style="color: var(--primary); font-weight: bold" id="selectedCountText">已選 0 人</span>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted)">勾選出賽球員，並可設定綁定關係（同組必同隊）</p>
+
+        <div id="attendanceList" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px">
+          <!-- 出賽清單由 JS 渲染 -->
+        </div>
+
+        <button onclick="generateTeams()" style="font-size: 18px; padding: 15px">🎲 產生平衡分組</button>
+
+        <div id="resultsArea" style="display: none; margin-top: 20px">
+          <h3>分組結果</h3>
+          <div id="teamsContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部導覽 -->
+    <nav>
+      <button id="nav-players" class="active" onclick="switchTab('players')">球員管理</button>
+      <button id="nav-match" onclick="switchTab('match')">出賽與分組</button>
+    </nav>
+
+    <!-- 新增/編輯 模態框 -->
+    <div class="modal-overlay" id="playerModal">
+      <div class="modal">
+        <h2 id="modalTitle">新增球員</h2>
+        <input type="hidden" id="editId" />
+        <input type="text" id="modalName" placeholder="球員名字" />
+        <select id="modalPos">
+          <option value="OUT">外線 (偏外圍/後衛)</option>
+          <option value="IN">內線 (偏禁區/中鋒)</option>
+        </select>
+        <label style="display: block; margin-top: 10px; font-size: 14px">實力分數 (1.0 - 5.0): <span id="scoreDisplay">3.0</span></label>
+        <input
+          type="range"
+          id="modalScore"
+          min="1.0"
+          max="5.0"
+          step="0.1"
+          value="3.0"
+          oninput="document.getElementById('scoreDisplay').innerText = this.value"
+        />
+
+        <div class="flex-row" style="margin-top: 20px">
+          <button class="btn-secondary" onclick="closeModal()">取消</button>
+          <button onclick="savePlayer()">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- 資料模型 ---
+      let players = JSON.parse(localStorage.getItem('bball_players_v2')) || [
+        { id: 1, name: '阿傑', pos: 'OUT', score: 4.2 },
+        { id: 2, name: '大熊', pos: 'IN', score: 4.5 },
+        { id: 3, name: '小明', pos: 'OUT', score: 3.5 },
+        { id: 4, name: '老高', pos: 'IN', score: 3.8 },
+        { id: 5, name: '阿緯', pos: 'OUT', score: 3.0 },
+      ];
+      let selectedPlayers = {}; // { id: { selected: true, bindGroup: 'none' } }
+      let currentTeams = [];
+
+      function init() {
+        renderPlayerList();
+        renderAttendanceList();
+      }
+
+      function saveData() {
+        localStorage.setItem('bball_players_v2', JSON.stringify(players));
+      }
+
+      // --- UI 切換 ---
+      function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach((el) => el.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach((el) => el.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.getElementById(`nav-${tabId}`).classList.add('active');
+        if (tabId === 'match') renderAttendanceList();
+      }
+
+      // --- Modal 控制 (新增/編輯) ---
+      function openModal(id = null) {
+        const modal = document.getElementById('playerModal');
+        const title = document.getElementById('modalTitle');
+        if (id) {
+          const p = players.find((x) => x.id === id);
+          title.innerText = '編輯球員';
+          document.getElementById('editId').value = p.id;
+          document.getElementById('modalName').value = p.name;
+          document.getElementById('modalPos').value = p.pos;
+          document.getElementById('modalScore').value = p.score;
+          document.getElementById('scoreDisplay').innerText = p.score.toFixed(1);
+        } else {
+          title.innerText = '新增球員';
+          document.getElementById('editId').value = '';
+          document.getElementById('modalName').value = '';
+          document.getElementById('modalPos').value = 'OUT';
+          document.getElementById('modalScore').value = '3.0';
+          document.getElementById('scoreDisplay').innerText = '3.0';
+        }
+        modal.style.display = 'flex';
+      }
+
+      function closeModal() {
+        document.getElementById('playerModal').style.display = 'none';
+      }
+
+      function savePlayer() {
+        const id = document.getElementById('editId').value;
+        const name = document.getElementById('modalName').value.trim();
+        const pos = document.getElementById('modalPos').value;
+        const score = parseFloat(document.getElementById('modalScore').value);
+
+        if (!name) return alert('請輸入名字');
+
+        if (id) {
+          // 編輯
+          let p = players.find((x) => x.id == id);
+          p.name = name;
+          p.pos = pos;
+          p.score = score;
+        } else {
+          // 新增
+          players.push({ id: Date.now(), name, pos, score });
+        }
+        saveData();
+        closeModal();
+        renderPlayerList();
+        renderAttendanceList();
+      }
+
+      function deletePlayer(id) {
+        if (confirm('確定要刪除這位球員嗎？')) {
+          players = players.filter((p) => p.id !== id);
+          delete selectedPlayers[id];
+          saveData();
+          renderPlayerList();
+          renderAttendanceList();
+        }
+      }
+
+      // --- 球員庫渲染 (搜尋與排序) ---
+      function renderPlayerList() {
+        const grid = document.getElementById('playerGrid');
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        const sortBy = document.getElementById('sortSelect').value;
+
+        let filteredPlayers = players.filter((p) => p.name.toLowerCase().includes(searchQuery));
+
+        filteredPlayers.sort((a, b) => {
+          if (sortBy === 'scoreDesc') return b.score - a.score;
+          if (sortBy === 'scoreAsc') return a.score - b.score;
+          if (sortBy === 'pos') return a.pos.localeCompare(b.pos);
+          return 0;
+        });
+
+        document.getElementById('totalPlayerCount').innerText = filteredPlayers.length;
+        grid.innerHTML = '';
+
+        filteredPlayers.forEach((p) => {
+          const avatarIcon = p.pos === 'IN' ? '🧱' : '🏀';
+          const posClass = p.pos === 'IN' ? 'in' : 'out';
+          grid.innerHTML += `
+                <div class="player-card">
+                    <div class="avatar ${posClass}">${avatarIcon}</div>
+                    <div class="card-name">${p.name}</div>
+                    <div class="card-score">⭐ ${p.score.toFixed(1)}</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">${p.pos === 'IN' ? '內線' : '外線'}</div>
+                    <div class="card-actions">
+                        <button class="btn-small" style="flex:1;" onclick="openModal(${p.id})">編輯</button>
+                        <button class="btn-danger btn-small" style="flex:1;" onclick="deletePlayer(${p.id})">刪</button>
+                    </div>
+                </div>
+            `;
+        });
+      }
+
+      // --- 出賽與綁定功能 ---
+      function renderAttendanceList() {
+        const list = document.getElementById('attendanceList');
+        list.innerHTML = '';
+        let selectedCount = 0;
+
+        players.forEach((p) => {
+          if (!selectedPlayers[p.id]) selectedPlayers[p.id] = { selected: false, bindGroup: 'none' };
+          const state = selectedPlayers[p.id];
+          if (state.selected) selectedCount++;
+
+          const isChecked = state.selected ? 'checked' : '';
+          list.innerHTML += `
+                <div class="match-item">
+                    <label class="flex-row" style="cursor:pointer; flex: 2;">
+                        <input type="checkbox" style="width: 20px; height: 20px;" ${isChecked} onchange="toggleSelection(${p.id}, this.checked)">
+                        <strong>${p.name}</strong> <span style="font-size:12px; color:#aaa;">(${p.pos === 'IN' ? '內' : '外'}, ${p.score.toFixed(1)})</span>
+                    </label>
+                    <div style="flex: 1;">
+                        <select class="bind-select" onchange="updateBind(${p.id}, this.value)" ${state.selected ? '' : 'disabled'} id="bind-${p.id}">
+                            <option value="none" ${state.bindGroup === 'none' ? 'selected' : ''}>無綁定</option>
+                            <option value="A" ${state.bindGroup === 'A' ? 'selected' : ''}>綁 A組</option>
+                            <option value="B" ${state.bindGroup === 'B' ? 'selected' : ''}>綁 B組</option>
+                            <option value="C" ${state.bindGroup === 'C' ? 'selected' : ''}>綁 C組</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('selectedCountText').innerText = `已選 ${selectedCount} 人`;
+      }
+
+      function toggleSelection(id, isChecked) {
+        selectedPlayers[id].selected = isChecked;
+        if (!isChecked) selectedPlayers[id].bindGroup = 'none'; // 取消勾選時解除綁定
+        renderAttendanceList();
+      }
+
+      function updateBind(id, group) {
+        selectedPlayers[id].bindGroup = group;
+      }
+
+      // --- 核心演算法：支援綁定與內外線均分 ---
+      function generateTeams() {
+        const activeIds = Object.keys(selectedPlayers)
+          .filter((id) => selectedPlayers[id].selected)
+          .map(Number);
+        if (activeIds.length < 5) return alert('人數不足一隊 (最少 5 人)');
+
+        const activePlayers = activeIds.map((id) => players.find((p) => p.id === id));
+        const numTeams = Math.max(1, Math.floor(activePlayers.length / 5)); // 幾支隊伍
+        const maxPerTeam = Math.ceil(activePlayers.length / numTeams);
+
+        // 計算理想內線人數
+        const totalIn = activePlayers.filter((p) => p.pos === 'IN').length;
+        const targetInPerTeam = totalIn / numTeams;
+
+        // 處理綁定：將同組球員打包成 "Bundle"
+        let bundles = [];
+        let grouped = { none: [], A: [], B: [], C: [] };
+
+        activePlayers.forEach((p) => {
+          const grp = selectedPlayers[p.id].bindGroup;
+          if (grp === 'none') {
+            bundles.push([p]); // 未綁定的自己一包
+          } else {
+            grouped[grp].push(p);
+          }
+        });
+        ['A', 'B', 'C'].forEach((grp) => {
+          if (grouped[grp].length > 0) bundles.push(grouped[grp]);
+        });
+
+        let bestTeams = [];
+        let bestScore = Infinity; // 越低越好
+
+        // 嘗試 1000 次尋找最佳解
+        for (let attempt = 0; attempt < 1000; attempt++) {
+          // 打亂 Bundles
+          let shuffledBundles = [...bundles].sort(() => Math.random() - 0.5);
+          let tempTeams = Array.from({ length: numTeams }, () => []);
+          let isValid = true;
+
+          // 將 Bundle 塞入隊伍
+          for (let bundle of shuffledBundles) {
+            // 找尋還有空間容納這個 bundle 的隊伍
+            let availableTeams = tempTeams.filter((t) => t.length + bundle.length <= maxPerTeam);
+
+            if (availableTeams.length === 0) {
+              isValid = false;
+              break; // 這個配置塞爆了，失敗
+            }
+            // 隨機選一個可以放的隊伍
+            let targetTeam = availableTeams[Math.floor(Math.random() * availableTeams.length)];
+            targetTeam.push(...bundle);
+          }
+
+          if (!isValid) continue;
+
+          // 計算分數 (Fitness)
+          let teamScores = tempTeams.map((t) => t.reduce((sum, p) => sum + p.score, 0));
+          let variance = Math.max(...teamScores) - Math.min(...teamScores); // 實力落差
+
+          // 計算內外線失衡懲罰 (差距越大扣越多分)
+          let posPenalty = 0;
+          tempTeams.forEach((t) => {
+            let inCount = t.filter((p) => p.pos === 'IN').length;
+            posPenalty += Math.abs(inCount - targetInPerTeam);
+          });
+
+          // 總評估分數 = 實力落差 + (位置失衡懲罰 * 權重)
+          // 權重設為 1.5，確保演算法會優先考量內外線均衡
+          let totalPenalty = variance + posPenalty * 1.5;
+
+          if (totalPenalty < bestScore) {
+            bestScore = totalPenalty;
+            bestTeams = tempTeams;
+            // 如果實力落差極小，且位置分佈完美，提早結束
+            if (variance <= 1.0 && posPenalty <= 0.5) break;
+          }
+        }
+
+        if (bestTeams.length === 0) {
+          return alert('無法產生符合綁定與人數條件的隊伍，請減少綁定人數或增加總人數！');
+        }
+
+        currentTeams = bestTeams;
+        renderTeams();
+      }
+
+      function renderTeams() {
+        document.getElementById('resultsArea').style.display = 'block';
+        const container = document.getElementById('teamsContainer');
+        container.innerHTML = '';
+
+        currentTeams.forEach((team, index) => {
+          const teamScore = team.reduce((sum, p) => sum + p.score, 0).toFixed(1);
+          let playersHtml = team
+            .map(
+              (p) => `
+                <div class="team-player">
+                    <span>${p.pos === 'IN' ? '🧱' : '🏀'} ${p.name} 
+                        ${selectedPlayers[p.id].bindGroup !== 'none' ? `<span style="font-size:10px; background:#555; padding:2px 5px; border-radius:4px;">${selectedPlayers[p.id].bindGroup}組</span>` : ''}
+                    </span>
+                    <span style="color: var(--text-muted)">⭐ ${p.score.toFixed(1)}</span>
+                </div>
+            `
+            )
+            .join('');
+
+          container.innerHTML += `
+                <div class="team-box">
+                    <div class="team-header">
+                        <span>第 ${index + 1} 隊 (${team.length}人)</span>
+                        <span>總戰力: ${teamScore}</span>
+                    </div>
+                    <div class="team-body">
+                        ${playersHtml}
+                        <div style="margin-top: 15px; display:flex; gap:10px;">
+                            <button class="btn-success btn-small" style="flex:1" onclick="adjustScore(${index}, 0.1)">🏆 贏球 (+0.1)</button>
+                            <button class="btn-danger btn-small" style="flex:1" onclick="adjustScore(${index}, -0.1)">💀 輸球 (-0.1)</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // 滾動到結果區
+        document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // --- 勝負分數微調 ---
+      function adjustScore(teamIndex, amount) {
+        if (!confirm(`確定要為第 ${teamIndex + 1} 隊的所有球員 ${amount > 0 ? '增加' : '扣除'} ${Math.abs(amount)} 分嗎？`)) return;
+
+        const team = currentTeams[teamIndex];
+        team.forEach((tp) => {
+          let player = players.find((p) => p.id === tp.id);
+          if (player) {
+            player.score += amount;
+            if (player.score > 5.0) player.score = 5.0;
+            if (player.score < 1.0) player.score = 1.0;
+          }
+        });
+
+        saveData();
+        renderPlayerList();
+        renderAttendanceList();
+        renderTeams();
+        alert(`第 ${teamIndex + 1} 隊分數調整完畢！`);
+      }
+
+      init();
+    </script>
+  </body>
+</html>
